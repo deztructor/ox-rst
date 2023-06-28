@@ -412,8 +412,14 @@ possible.  It doesn't apply to `inlinetask' elements."
 		  (and (plist-get info :with-priority)
 			   (let ((char (org-element-property :priority element)))
 				 (and char (format "(#%c) " char)))))
-		 (first-part (concat numbers todo priority text)))
+                 (adorn (nth (1- (org-export-get-relative-level element info)) rst-preferred-adornments))
+		 (under-char (first adorn))
+                 (is-over (eq (second adorn) 'over-and-under))
+		 (first-part (concat numbers todo priority text))
+                 (decoration (and under-char (make-string (string-width first-part) under-char))))
     (concat
+     (when (and underline headlinep is-over decoration)
+       (concat decoration "\n"))
      first-part
      ;; Align tags, if any.
      (when tags
@@ -422,13 +428,8 @@ possible.  It doesn't apply to `inlinetask' elements."
 		tags))
      ;; Maybe underline text, if ELEMENT type is `headline' and an
      ;; underline character has been defined.
-     (when (and underline headlinep)
-       (let ((under-char
-			  (nth (1- (org-export-get-relative-level element info))
-				   org-rst-headline-underline-characters)))
-		 (and under-char
-			  (concat "\n"
-					  (make-string (string-width first-part) under-char))))))))
+     (when (and underline headlinep decoration)
+       (concat "\n" decoration)))))
 
 
 (defun org-rst--text-markup (text markup info)
